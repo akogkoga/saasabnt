@@ -54,15 +54,25 @@ class PreDeployCheck(unittest.TestCase):
 
         doc = Document(BytesIO(response.content))
         texts = [p.text for p in doc.paragraphs if p.text.strip()]
-        self.assertEqual(texts[:6], [
+        self.assertEqual(texts[:10], [
             "TITULO DO TRABALHO",
             "NOME DO AUTOR",
-            "INTRODUÇÃO",
-            "Texto de introducao.",
-            "CONCLUSÃO",
-            "Fim.",
+            "FOLHA DE ROSTO",
+            "TITULO DO TRABALHO",
+            "NOME DO AUTOR",
+            "Trabalho acadêmico apresentado para fins de formatação conforme ABNT.",
+            "SUMÁRIO",
+            "1 INTRODUÇÃO",
+            "2 CONCLUSÃO",
+            "REFERÊNCIAS",
         ])
-        self.assertIn("REFERENCIAS", texts)
+        self.assertEqual(texts[10:], [
+            "1 INTRODUÇÃO",
+            "Texto de introducao.",
+            "2 CONCLUSÃO",
+            "Fim.",
+            "REFERÊNCIAS",
+        ])
 
         section = doc.sections[0]
         self.assertAlmostEqual(section.top_margin.cm, 3.0, places=1)

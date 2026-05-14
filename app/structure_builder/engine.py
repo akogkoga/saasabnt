@@ -14,6 +14,14 @@ class StructureBuilder:
         current_phase = "INTRO"
 
         for block in blocks[2:]:
+            if block.predicted_type in [
+                BlockType.CAPA,
+                BlockType.FOLHA_ROSTO,
+                BlockType.SUMARIO,
+                BlockType.SUMARIO_ENTRY,
+            ]:
+                continue
+
             text_key = SemanticNLPEngine.canonicalize(block.normalized_text)
             intent = block.features.semantic.semantic_intent
 

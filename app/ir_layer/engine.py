@@ -24,13 +24,15 @@ class IRLayer:
             else:
                 style = RuleEngine.get_style_for_type(block.predicted_type)
 
-            if i < 2:
-                style.alignment = "center"
-                style.bold = i == 0
+            text_key = SemanticNLPEngine.canonicalize(block_text)
+
+            if block.predicted_type == BlockType.FOLHA_ROSTO and text_key == "FOLHA DE ROSTO":
                 style.page_break_before = True
 
-            if block.predicted_type in [BlockType.HEADING, BlockType.CHAPTER] and i > 2:
-                text_key = SemanticNLPEngine.canonicalize(block.normalized_text)
+            if block.predicted_type == BlockType.SUMARIO:
+                style.page_break_before = True
+
+            if block.predicted_type in [BlockType.HEADING, BlockType.CHAPTER]:
                 if any(k in text_key for k in ["INTRODUCAO", "CONCLUSAO", "REFERENCIAS"]):
                     style.page_break_before = True
 

@@ -25,18 +25,6 @@ class ValidationEngine:
                 if "REFERENCIAS" in text_key:
                     has_refs = True
 
-            if block_type == BlockType.CHAPTER and i > 0:
-                prev_type = ordered_blocks[i - 1].predicted_type
-                if prev_type == BlockType.PARAGRAPH:
-                    res.errors.append(
-                        ValidationError(
-                            type=ErrorType.ORPHAN_BLOCK,
-                            message=f"Chapter follows paragraph at index {i}",
-                            affected_block_indices=[i],
-                        )
-                    )
-                    res.is_valid = False
-
             if block_type == BlockType.REFERENCE and i < len(ordered_blocks) * 0.5:
                 res.errors.append(
                     ValidationError(

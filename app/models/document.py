@@ -16,6 +16,8 @@ class BlockType(str, Enum):
     FOOTNOTE = "footnote"
     CAPA = "capa"
     FOLHA_ROSTO = "folha_rosto"
+    SUMARIO = "sumario"
+    SUMARIO_ENTRY = "sumario_entry"
     TABLE = "table"
     IMAGE = "image"
 
