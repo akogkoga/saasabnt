@@ -13,7 +13,10 @@ class ValidationEngine:
             return res
 
         has_intro = False
+        has_dev = False
+        has_concl = False
         has_refs = False
+        has_resumo = False
 
         for i, block in enumerate(ordered_blocks):
             block_type = block.predicted_type
@@ -22,8 +25,15 @@ class ValidationEngine:
             if block_type in [BlockType.HEADING, BlockType.CHAPTER]:
                 if "INTRODUCAO" in text_key:
                     has_intro = True
+                if "DESENVOLVIMENTO" in text_key:
+                    has_dev = True
+                if "CONCLUSAO" in text_key:
+                    has_concl = True
                 if "REFERENCIAS" in text_key:
                     has_refs = True
+
+            if block_type == BlockType.PRE_TEXTUAL and text_key == "RESUMO":
+                has_resumo = True
 
             if block_type == BlockType.REFERENCE and i < len(ordered_blocks) * 0.5:
                 res.errors.append(
@@ -34,6 +44,18 @@ class ValidationEngine:
                     )
                 )
                 res.is_valid = False
+
+        if not has_intro or not has_dev or not has_concl:
+            res.errors.append(
+                ValidationError(
+                    type=ErrorType.LOW_CONFIDENCE_STRUCTURE,
+                    message="Mandatory textual structure missing.",
+                )
+            )
+            res.is_valid = False
+
+        if not has_resumo:
+            res.warnings.append("Resumo section missing; placeholder will be emitted.")
 
         if not has_refs:
             res.errors.append(ValidationError(type=ErrorType.MISSING_REFERENCES, message="References section missing."))

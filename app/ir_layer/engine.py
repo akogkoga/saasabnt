@@ -29,11 +29,17 @@ class IRLayer:
             if block.predicted_type == BlockType.FOLHA_ROSTO and text_key == "FOLHA DE ROSTO":
                 style.page_break_before = True
 
+            if block.predicted_type == BlockType.PRE_TEXTUAL and text_key in ["RESUMO", "ABSTRACT"]:
+                style.page_break_before = True
+
             if block.predicted_type == BlockType.SUMARIO:
                 style.page_break_before = True
 
             if block.predicted_type in [BlockType.HEADING, BlockType.CHAPTER]:
-                if any(k in text_key for k in ["INTRODUCAO", "CONCLUSAO", "REFERENCIAS"]):
+                if "INTRODUCAO" in text_key:
+                    style.starts_visible_page_numbering = True
+                    style.page_break_before = True
+                elif any(k in text_key for k in ["DESENVOLVIMENTO", "CONCLUSAO", "REFERENCIAS"]):
                     style.page_break_before = True
 
             ir_doc.blocks.append(IRBlock(semantic=sem, style=style))

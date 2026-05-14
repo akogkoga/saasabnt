@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 import sys
@@ -54,22 +55,37 @@ class PreDeployCheck(unittest.TestCase):
 
         doc = Document(BytesIO(response.content))
         texts = [p.text for p in doc.paragraphs if p.text.strip()]
-        self.assertEqual(texts[:10], [
-            "TITULO DO TRABALHO",
+        year = str(datetime.now().year)
+        self.assertEqual(texts[:25], [
+            "INSTITUIÇÃO",
             "NOME DO AUTOR",
+            "TITULO DO TRABALHO",
+            "CIDADE",
+            year,
             "FOLHA DE ROSTO",
-            "TITULO DO TRABALHO",
             "NOME DO AUTOR",
+            "TITULO DO TRABALHO",
             "Trabalho acadêmico apresentado para fins de formatação conforme ABNT.",
+            "Objetivo acadêmico não informado.",
+            "INSTITUIÇÃO",
+            "Área não informada.",
+            "Orientador não informado.",
+            "CIDADE",
+            year,
+            "RESUMO",
+            "Resumo não identificado no documento de entrada. Informe objetivo, metodologia, resultados e conclusão em 150 a 500 palavras.",
             "SUMÁRIO",
             "1 INTRODUÇÃO",
-            "2 CONCLUSÃO",
+            "2 DESENVOLVIMENTO",
+            "3 CONCLUSÃO",
             "REFERÊNCIAS",
-        ])
-        self.assertEqual(texts[10:], [
             "1 INTRODUÇÃO",
             "Texto de introducao.",
-            "2 CONCLUSÃO",
+            "2 DESENVOLVIMENTO",
+        ])
+        self.assertEqual(texts[25:], [
+            "Desenvolvimento não identificado no documento de entrada.",
+            "3 CONCLUSÃO",
             "Fim.",
             "REFERÊNCIAS",
         ])
@@ -79,6 +95,9 @@ class PreDeployCheck(unittest.TestCase):
         self.assertAlmostEqual(section.left_margin.cm, 3.0, places=1)
         self.assertAlmostEqual(section.bottom_margin.cm, 2.0, places=1)
         self.assertAlmostEqual(section.right_margin.cm, 2.0, places=1)
+        self.assertAlmostEqual(section.page_width.cm, 21.0, places=1)
+        self.assertAlmostEqual(section.page_height.cm, 29.7, places=1)
+        self.assertGreaterEqual(len(doc.sections), 2)
 
     def test_docx_upload_with_table_preserves_table(self):
         source = Document()

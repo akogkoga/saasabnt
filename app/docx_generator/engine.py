@@ -1,6 +1,9 @@
 from docx import Document
 from docx.shared import Pt, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.section import WD_SECTION
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 from app.models.document import IRDocument, BlockType
 import io
 
@@ -14,17 +17,18 @@ class DOCXRenderEngine:
         
         # 1. Global Page Setup
         for section in doc.sections:
-            section.top_margin = Cm(ir_doc.global_margins["top"])
-            section.left_margin = Cm(ir_doc.global_margins["left"])
-            section.bottom_margin = Cm(ir_doc.global_margins["bottom"])
-            section.right_margin = Cm(ir_doc.global_margins["right"])
+            DOCXRenderEngine._apply_section_setup(section, ir_doc)
 
         # 2. Block Rendering
         for ir_block in ir_doc.blocks:
             sem = ir_block.semantic
             style = ir_block.style
             
-            if style.page_break_before:
+            if style.starts_visible_page_numbering:
+                section = doc.add_section(WD_SECTION.NEW_PAGE)
+                DOCXRenderEngine._apply_section_setup(section, ir_doc)
+                DOCXRenderEngine._enable_page_numbering(section)
+            elif style.page_break_before:
                 doc.add_page_break()
                 
             if sem.type == BlockType.TABLE and sem.table_data:
@@ -56,6 +60,8 @@ class DOCXRenderEngine:
         paragraph.alignment = align_map.get(style.alignment, WD_ALIGN_PARAGRAPH.JUSTIFY)
         
         fmt.line_spacing = style.line_spacing
+        fmt.space_before = Pt(0)
+        fmt.space_after = Pt(0)
         fmt.first_line_indent = Cm(style.first_line_indent) if style.first_line_indent > 0 else 0
         fmt.left_indent = Cm(style.left_indent) if style.left_indent > 0 else 0
             
@@ -64,6 +70,41 @@ class DOCXRenderEngine:
             run.font.name = style.font_name
             run.font.size = Pt(style.font_size)
             run.bold = style.bold
+
+    @staticmethod
+    def _apply_section_setup(section, ir_doc: IRDocument):
+        section.page_width = Cm(21)
+        section.page_height = Cm(29.7)
+        section.top_margin = Cm(ir_doc.global_margins["top"])
+        section.left_margin = Cm(ir_doc.global_margins["left"])
+        section.bottom_margin = Cm(ir_doc.global_margins["bottom"])
+        section.right_margin = Cm(ir_doc.global_margins["right"])
+
+    @staticmethod
+    def _enable_page_numbering(section):
+        section.header.is_linked_to_previous = False
+        paragraph = section.header.paragraphs[0] if section.header.paragraphs else section.header.add_paragraph()
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        paragraph.paragraph_format.space_before = Pt(0)
+        paragraph.paragraph_format.space_after = Pt(0)
+
+        run = paragraph.add_run()
+        run.font.name = "Times New Roman"
+        run.font.size = Pt(10)
+
+        field_begin = OxmlElement("w:fldChar")
+        field_begin.set(qn("w:fldCharType"), "begin")
+
+        instruction = OxmlElement("w:instrText")
+        instruction.set(qn("xml:space"), "preserve")
+        instruction.text = "PAGE"
+
+        field_end = OxmlElement("w:fldChar")
+        field_end.set(qn("w:fldCharType"), "end")
+
+        run._r.append(field_begin)
+        run._r.append(instruction)
+        run._r.append(field_end)
 
 # Line count: 59
 # ⚡ GOLDCODE rules applied — global_rules.md v3.0

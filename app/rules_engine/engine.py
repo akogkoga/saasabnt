@@ -19,7 +19,7 @@ class RuleEngine:
             style.bold = True
             style.first_line_indent = 0.0
             style.alignment = "left"
-        elif block_type in [BlockType.CAPA, BlockType.FOLHA_ROSTO]:
+        elif block_type in [BlockType.CAPA, BlockType.FOLHA_ROSTO, BlockType.PRE_TEXTUAL]:
             style.bold = block_type == BlockType.CAPA
             style.first_line_indent = 0.0
             style.alignment = "center"
@@ -30,6 +30,11 @@ class RuleEngine:
         elif block_type == BlockType.SUMARIO_ENTRY:
             style.first_line_indent = 0.0
             style.alignment = "left"
+        elif block_type in [BlockType.FIGURE_CAPTION, BlockType.TABLE_CAPTION, BlockType.SOURCE]:
+            style.font_size = 10
+            style.line_spacing = 1.0
+            style.first_line_indent = 0.0
+            style.alignment = "center"
         elif block_type == BlockType.LONG_CITATION:
             style.font_size = 10
             style.line_spacing = 1.0

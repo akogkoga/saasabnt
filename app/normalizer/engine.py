@@ -1,5 +1,6 @@
 import re
 from typing import List, Sequence, Union
+
 from app.models.document import DocumentBlock
 from app.nlp_engine.engine import SemanticNLPEngine
 
@@ -9,6 +10,10 @@ class SemanticNormalizer:
         "INTRODUCAO": "INTRODUÇÃO",
         "CONCLUSAO": "CONCLUSÃO",
         "REFERENCIAS": "REFERÊNCIAS",
+        "RESUMO": "RESUMO",
+        "ABSTRACT": "ABSTRACT",
+        "APENDICES": "APÊNDICES",
+        "ANEXOS": "ANEXOS",
     }
 
     @staticmethod

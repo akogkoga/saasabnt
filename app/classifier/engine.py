@@ -4,6 +4,19 @@ from app.nlp_engine.engine import SemanticNLPEngine
 import re
 
 class Classifier:
+    PRE_TEXTUAL_INTENTS = {
+        "RESUMO",
+        "ABSTRACT",
+        "FOLHA_APROVACAO",
+        "DEDICATORIA",
+        "AGRADECIMENTOS",
+        "EPIGRAFE",
+        "LISTA_ILUSTRACOES",
+        "LISTA_TABELAS",
+        "LISTA_ABREVIATURAS",
+        "LISTA_SIMBOLOS",
+    }
+
     @staticmethod
     def _looks_like_reference(text: str) -> bool:
         canonical = SemanticNLPEngine.canonicalize(text)
@@ -52,6 +65,20 @@ class Classifier:
                     block.predicted_type = BlockType.HEADING
                 else:
                     block.predicted_type = BlockType.PARAGRAPH
+
+            canonical = SemanticNLPEngine.canonicalize(block.normalized_text)
+            intent = block.features.semantic.semantic_intent
+
+            if intent in Classifier.PRE_TEXTUAL_INTENTS:
+                block.predicted_type = BlockType.HEADING
+            elif canonical.startswith("FIGURA "):
+                block.predicted_type = BlockType.FIGURE_CAPTION
+            elif canonical.startswith("TABELA "):
+                block.predicted_type = BlockType.TABLE_CAPTION
+            elif canonical.startswith("FONTE "):
+                block.predicted_type = BlockType.SOURCE
+            elif len(block.normalized_text) > 240 and block.normalized_text.count(".") >= 3:
+                block.predicted_type = BlockType.LONG_CITATION
             
             # --- V5.1: Stability Lock ---
             if top_prob > 0.85:

@@ -16,8 +16,12 @@ class BlockType(str, Enum):
     FOOTNOTE = "footnote"
     CAPA = "capa"
     FOLHA_ROSTO = "folha_rosto"
+    PRE_TEXTUAL = "pre_textual"
     SUMARIO = "sumario"
     SUMARIO_ENTRY = "sumario_entry"
+    FIGURE_CAPTION = "figure_caption"
+    TABLE_CAPTION = "table_caption"
+    SOURCE = "source"
     TABLE = "table"
     IMAGE = "image"
 
@@ -108,6 +112,7 @@ class StyleIR(BaseModel):
     bold: bool = False
     page_break_before: bool = False
     is_table_style: bool = False
+    starts_visible_page_numbering: bool = False
 
 class IRBlock(BaseModel):
     semantic: SemanticIR
@@ -140,6 +145,7 @@ class IRDocument(BaseModel):
 
 class ABNTStructure(BaseModel):
     pre_textual: List[DocumentBlock] = Field(default_factory=list)
+    pre_textual_optional: List[DocumentBlock] = Field(default_factory=list)
     textual_intro: List[DocumentBlock] = Field(default_factory=list)
     textual_dev: List[DocumentBlock] = Field(default_factory=list)
     textual_conclusion: List[DocumentBlock] = Field(default_factory=list)
