@@ -24,6 +24,8 @@ class PreDeployCheck(unittest.TestCase):
         self.assertIn("SaaS ABNT", home.text)
         self.assertIn("config.js", home.text)
         self.assertIn("agrade", home.text)
+        self.assertIn("Para a formatação sair 100%", home.text)
+        self.assertIn("Orientador não informado", home.text)
 
         self.assertEqual(self.client.get("/styles.css").status_code, 200)
         self.assertEqual(self.client.get("/app.js").status_code, 200)
