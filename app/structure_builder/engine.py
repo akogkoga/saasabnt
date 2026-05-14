@@ -40,16 +40,34 @@ class StructureBuilder:
         if not source_blocks:
             return structure
 
-        structure.pre_textual = source_blocks[:2]
+        content_start = 0
+        for i, block in enumerate(source_blocks[:2]):
+            intent = block.features.semantic.semantic_intent
+            intent_confidence = block.features.semantic.keyword_match
+            text_key = SemanticNLPEngine.canonicalize(block.normalized_text)
+            if (
+                (intent in StructureBuilder.PRE_TEXTUAL_INTENTS and intent_confidence >= 0.9)
+                or intent in {"INTRODUCAO", "DESENVOLVIMENTO", "CONCLUSAO"}
+                or intent in StructureBuilder.POST_TEXTUAL_INTENTS
+                or text_key in {"SUMARIO", "SUMÁRIO"}
+            ):
+                break
+
+            structure.pre_textual.append(block)
+            content_start = i + 1
+
         current_phase = "INTRO"
 
-        for block in source_blocks[2:]:
+        for block in source_blocks[content_start:]:
             text_key = SemanticNLPEngine.canonicalize(block.normalized_text)
             intent = block.features.semantic.semantic_intent
+            intent_confidence = block.features.semantic.keyword_match
             is_heading = block.predicted_type in [BlockType.HEADING, BlockType.CHAPTER]
 
             if is_heading:
-                if intent in StructureBuilder.PRE_TEXTUAL_INTENTS:
+                if intent in StructureBuilder.PRE_TEXTUAL_INTENTS and intent_confidence >= 0.9:
+                    current_phase = "PRE_TEXTUAL"
+                elif text_key in {"SUMARIO", "SUMÁRIO"}:
                     current_phase = "PRE_TEXTUAL"
                 elif intent == "INTRODUCAO" or "INTRODUCAO" in text_key:
                     current_phase = "INTRO"

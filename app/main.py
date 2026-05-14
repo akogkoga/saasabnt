@@ -47,7 +47,8 @@ async def health_check():
 @app.post("/format")
 async def format_document(
     text: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None)
+    file: Optional[UploadFile] = File(None),
+    complete_missing: bool = Form(False),
 ):
     """
     ABNT V6 Functional Pipeline:
@@ -74,10 +75,13 @@ async def format_document(
     
     # 3. INITIAL STRUCTURE & ORDERING
     struct = StructureBuilder.build(classified)
-    ordered = OrderingEngine.enforce_order(struct)
+    ordered = OrderingEngine.enforce_order(struct, complete_missing=complete_missing)
     
     # 4. ACTIVE RECOMPILATION LOOP (Formal Convergence Checked via IR Hash)
-    final_blocks, val_res, ir_converged, final_ir = RecompilationLoopEngine.run(ordered)
+    final_blocks, val_res, ir_converged, final_ir = RecompilationLoopEngine.run(
+        ordered,
+        complete_missing=complete_missing,
+    )
     
     if not ir_converged:
         raise HTTPException(status_code=500, detail="Compiler failed to converge structurally (IR Equality check failed).")
@@ -87,7 +91,10 @@ async def format_document(
     final_ir.snapshots["6.0"] = snapshot
     
     # 5. RENDER SANITY CHECK ENGINE
-    is_render_safe, sanity_msg = RenderSanityCheckEngine.check(final_ir)
+    is_render_safe, sanity_msg = RenderSanityCheckEngine.check(
+        final_ir,
+        require_complete_structure=complete_missing,
+    )
     if not is_render_safe:
         raise HTTPException(status_code=500, detail=f"Render Sanity Check Failed: {sanity_msg}")
         

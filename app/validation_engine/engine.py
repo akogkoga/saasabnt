@@ -5,7 +5,7 @@ from app.nlp_engine.engine import SemanticNLPEngine
 
 class ValidationEngine:
     @staticmethod
-    def validate(ordered_blocks: List[DocumentBlock]) -> ValidationResult:
+    def validate(ordered_blocks: List[DocumentBlock], require_complete_structure: bool = True) -> ValidationResult:
         res = ValidationResult(state=DocumentState.VALIDATED)
         if not ordered_blocks:
             res.is_valid = False
@@ -45,7 +45,7 @@ class ValidationEngine:
                 )
                 res.is_valid = False
 
-        if not has_intro or not has_dev or not has_concl:
+        if require_complete_structure and (not has_intro or not has_dev or not has_concl):
             res.errors.append(
                 ValidationError(
                     type=ErrorType.LOW_CONFIDENCE_STRUCTURE,
@@ -54,10 +54,10 @@ class ValidationEngine:
             )
             res.is_valid = False
 
-        if not has_resumo:
+        if require_complete_structure and not has_resumo:
             res.warnings.append("Resumo section missing; placeholder will be emitted.")
 
-        if not has_refs:
+        if require_complete_structure and not has_refs:
             res.errors.append(ValidationError(type=ErrorType.MISSING_REFERENCES, message="References section missing."))
             res.is_valid = False
 

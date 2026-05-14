@@ -26,6 +26,8 @@ class PreDeployCheck(unittest.TestCase):
         self.assertIn("agrade", home.text)
         self.assertIn("Para a formatação sair 100%", home.text)
         self.assertIn("Orientador não informado", home.text)
+        self.assertIn("Completar estrutura ABNT automaticamente", home.text)
+        self.assertIn("formatar somente o que foi enviado", home.text)
 
         self.assertEqual(self.client.get("/styles.css").status_code, 200)
         self.assertEqual(self.client.get("/app.js").status_code, 200)
@@ -36,7 +38,7 @@ class PreDeployCheck(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok"})
 
-    def test_text_input_generates_openable_docx(self):
+    def test_adaptive_mode_formats_only_submitted_sections(self):
         response = self.client.post(
             "/format",
             data={
@@ -57,8 +59,45 @@ class PreDeployCheck(unittest.TestCase):
 
         doc = Document(BytesIO(response.content))
         texts = [p.text for p in doc.paragraphs if p.text.strip()]
+        self.assertEqual(texts, [
+            "TITULO DO TRABALHO",
+            "NOME DO AUTOR",
+            "1 INTRODUÇÃO",
+            "Texto de introducao.",
+            "2 CONCLUSÃO",
+            "Fim.",
+        ])
+
+        section = doc.sections[0]
+        self.assertAlmostEqual(section.top_margin.cm, 3.0, places=1)
+        self.assertAlmostEqual(section.left_margin.cm, 3.0, places=1)
+        self.assertAlmostEqual(section.bottom_margin.cm, 2.0, places=1)
+        self.assertAlmostEqual(section.right_margin.cm, 2.0, places=1)
+        self.assertAlmostEqual(section.page_width.cm, 21.0, places=1)
+        self.assertAlmostEqual(section.page_height.cm, 29.7, places=1)
+        self.assertGreaterEqual(len(doc.sections), 2)
+
+    def test_complete_missing_mode_emits_placeholders(self):
+        response = self.client.post(
+            "/format",
+            data={
+                "complete_missing": "true",
+                "text": (
+                    "TITULO DO TRABALHO\n"
+                    "NOME DO AUTOR\n"
+                    "INTRODUCAO\n"
+                    "Texto de introducao.\n"
+                    "CONCLUSAO\n"
+                    "Fim."
+                ),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        doc = Document(BytesIO(response.content))
+        texts = [p.text for p in doc.paragraphs if p.text.strip()]
         year = str(datetime.now().year)
-        self.assertEqual(texts[:25], [
+        self.assertEqual(texts[:22], [
             "INSTITUIÇÃO",
             "NOME DO AUTOR",
             "TITULO DO TRABALHO",
@@ -81,25 +120,8 @@ class PreDeployCheck(unittest.TestCase):
             "2 DESENVOLVIMENTO",
             "3 CONCLUSÃO",
             "REFERÊNCIAS",
-            "1 INTRODUÇÃO",
-            "Texto de introducao.",
-            "2 DESENVOLVIMENTO",
         ])
-        self.assertEqual(texts[25:], [
-            "Desenvolvimento não identificado no documento de entrada.",
-            "3 CONCLUSÃO",
-            "Fim.",
-            "REFERÊNCIAS",
-        ])
-
-        section = doc.sections[0]
-        self.assertAlmostEqual(section.top_margin.cm, 3.0, places=1)
-        self.assertAlmostEqual(section.left_margin.cm, 3.0, places=1)
-        self.assertAlmostEqual(section.bottom_margin.cm, 2.0, places=1)
-        self.assertAlmostEqual(section.right_margin.cm, 2.0, places=1)
-        self.assertAlmostEqual(section.page_width.cm, 21.0, places=1)
-        self.assertAlmostEqual(section.page_height.cm, 29.7, places=1)
-        self.assertGreaterEqual(len(doc.sections), 2)
+        self.assertIn("Desenvolvimento não identificado no documento de entrada.", texts)
 
     def test_docx_upload_with_table_preserves_table(self):
         source = Document()

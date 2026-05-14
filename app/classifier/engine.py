@@ -15,6 +15,7 @@ class Classifier:
         "LISTA_TABELAS",
         "LISTA_ABREVIATURAS",
         "LISTA_SIMBOLOS",
+        "SUMARIO",
     }
 
     @staticmethod
@@ -68,8 +69,9 @@ class Classifier:
 
             canonical = SemanticNLPEngine.canonicalize(block.normalized_text)
             intent = block.features.semantic.semantic_intent
+            intent_confidence = block.features.semantic.keyword_match
 
-            if intent in Classifier.PRE_TEXTUAL_INTENTS:
+            if intent in Classifier.PRE_TEXTUAL_INTENTS and intent_confidence >= 0.9:
                 block.predicted_type = BlockType.HEADING
             elif canonical.startswith("FIGURA "):
                 block.predicted_type = BlockType.FIGURE_CAPTION

@@ -14,6 +14,7 @@ const dropZone = document.querySelector("#dropZone");
 const apiStatus = document.querySelector("#apiStatus");
 const downloadModal = document.querySelector("#downloadModal");
 const continueDownloadButton = document.querySelector("#continueDownloadButton");
+const completeMissingInput = document.querySelector("#completeMissingInput");
 
 let downloadUrl = "";
 const apiBaseUrl = (window.SAAS_ABNT_CONFIG?.apiBaseUrl || "").replace(/\/$/, "");
@@ -97,6 +98,7 @@ const buildFormData = () => {
     throw new Error("Envie um DOCX ou cole um texto antes de formatar.");
   }
 
+  formData.append("complete_missing", completeMissingInput.checked ? "true" : "false");
   return formData;
 };
 
@@ -113,7 +115,9 @@ const formatDocument = async () => {
   setBusy(true);
   setResult({
     title: "Formatando documento",
-    message: "Compilando estrutura, validando IR e gerando o DOCX final.",
+    message: completeMissingInput.checked
+      ? "Completando estrutura ABNT, validando IR e gerando o DOCX final."
+      : "Formatando somente as partes enviadas, sem criar campos ausentes.",
     state: "Processando",
   });
 

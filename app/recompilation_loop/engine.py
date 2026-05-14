@@ -12,7 +12,10 @@ class RecompilationLoopEngine:
     MAX_ITERATIONS = 5
 
     @staticmethod
-    def run(blocks: List[DocumentBlock]) -> tuple[List[DocumentBlock], ValidationResult, bool, IRDocument]:
+    def run(
+        blocks: List[DocumentBlock],
+        complete_missing: bool = True,
+    ) -> tuple[List[DocumentBlock], ValidationResult, bool, IRDocument]:
         """
         Orchestrates the active correction loop with formal IR Hash convergence.
         Returns: (final_blocks, final_validation, is_converged, final_ir_doc)
@@ -26,7 +29,10 @@ class RecompilationLoopEngine:
         
         while iteration < RecompilationLoopEngine.MAX_ITERATIONS:
             # 1. Validate
-            validation = ValidationEngine.validate(current_blocks)
+            validation = ValidationEngine.validate(
+                current_blocks,
+                require_complete_structure=complete_missing,
+            )
             final_validation = validation
             
             # 2. Generate IR and Hash for Convergence Check
@@ -46,7 +52,10 @@ class RecompilationLoopEngine:
             if not validation.is_valid:
                 corrected = CorrectionEngine.apply_corrections(current_blocks, validation.errors)
                 struct = StructureBuilder.build(corrected)
-                current_blocks = OrderingEngine.enforce_order(struct)
+                current_blocks = OrderingEngine.enforce_order(
+                    struct,
+                    complete_missing=complete_missing,
+                )
                 
             iteration += 1
             

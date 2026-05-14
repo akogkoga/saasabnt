@@ -30,6 +30,7 @@ class SemanticNLPEngine:
         "LISTA_TABELAS": ["LISTA DE TABELAS"],
         "LISTA_ABREVIATURAS": ["LISTA DE ABREVIATURAS", "LISTA DE SIGLAS"],
         "LISTA_SIMBOLOS": ["LISTA DE SIMBOLOS"],
+        "SUMARIO": ["SUMARIO"],
         "APENDICES": ["APENDICES", "APENDICE"],
         "ANEXOS": ["ANEXOS", "ANEXO"],
     }

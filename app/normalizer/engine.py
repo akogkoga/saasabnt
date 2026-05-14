@@ -12,6 +12,7 @@ class SemanticNormalizer:
         "REFERENCIAS": "REFERÊNCIAS",
         "RESUMO": "RESUMO",
         "ABSTRACT": "ABSTRACT",
+        "SUMARIO": "SUMÁRIO",
         "APENDICES": "APÊNDICES",
         "ANEXOS": "ANEXOS",
     }

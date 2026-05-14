@@ -4,7 +4,7 @@ from app.nlp_engine.engine import SemanticNLPEngine
 
 class RenderSanityCheckEngine:
     @staticmethod
-    def check(ir_doc: IRDocument) -> tuple[bool, str]:
+    def check(ir_doc: IRDocument, require_complete_structure: bool = True) -> tuple[bool, str]:
         """
         Pre-render validation to ensure the IR is safe to render.
         """
@@ -40,6 +40,9 @@ class RenderSanityCheckEngine:
 
             if sem.type == BlockType.REFERENCE and i < len(ir_doc.blocks) * 0.5:
                 return False, f"Render violation: Reference found too early at index {i}."
+
+        if not require_complete_structure:
+            return True, "Render Safe."
 
         if not has_resumo:
             return False, "Render violation: Missing Resumo."

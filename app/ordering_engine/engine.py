@@ -17,19 +17,29 @@ class OrderingEngine:
     }
 
     @staticmethod
-    def enforce_order(structure: ABNTStructure) -> List[DocumentBlock]:
+    def enforce_order(structure: ABNTStructure, complete_missing: bool = True) -> List[DocumentBlock]:
         """
         Enforces ABNT macro-order:
         pre-textual -> textual -> post-textual.
         """
         metadata = OrderingEngine._extract_metadata(structure.pre_textual)
-        textual_sequence, summary_entries = OrderingEngine._build_textual_sequence(structure)
+        textual_sequence, summary_entries = OrderingEngine._build_textual_sequence(
+            structure,
+            complete_missing=complete_missing,
+        )
+
+        if not complete_missing:
+            final_sequence = OrderingEngine._build_adaptive_pre_textual(structure.pre_textual)
+            final_sequence.extend(structure.pre_textual_optional)
+            final_sequence.extend(textual_sequence)
+            final_sequence.extend(OrderingEngine._ordered_post_textual(structure.post_textual, complete_missing=False))
+            return final_sequence
 
         final_sequence = OrderingEngine._build_mandatory_pre_textual(metadata)
         final_sequence.extend(OrderingEngine._build_optional_pre_textual(structure.pre_textual_optional))
         final_sequence.extend(OrderingEngine._build_summary(summary_entries))
         final_sequence.extend(textual_sequence)
-        final_sequence.extend(OrderingEngine._ordered_post_textual(structure.post_textual))
+        final_sequence.extend(OrderingEngine._ordered_post_textual(structure.post_textual, complete_missing=True))
         return final_sequence
 
     @staticmethod
@@ -49,7 +59,10 @@ class OrderingEngine:
         }
 
     @staticmethod
-    def _build_textual_sequence(structure: ABNTStructure) -> tuple[List[DocumentBlock], List[str]]:
+    def _build_textual_sequence(
+        structure: ABNTStructure,
+        complete_missing: bool,
+    ) -> tuple[List[DocumentBlock], List[str]]:
         textual_sequence: List[DocumentBlock] = []
         summary_entries: List[str] = []
         chapter_counter = 1
@@ -60,6 +73,9 @@ class OrderingEngine:
             placeholder: str,
         ):
             nonlocal chapter_counter
+
+            if not blocks and not complete_missing:
+                return
 
             phase_blocks = blocks or [
                 OrderingEngine._locked_block(
@@ -157,6 +173,14 @@ class OrderingEngine:
         ]
 
     @staticmethod
+    def _build_adaptive_pre_textual(blocks: List[DocumentBlock]) -> List[DocumentBlock]:
+        adaptive = []
+        for block in blocks:
+            block.predicted_type = BlockType.CAPA
+            adaptive.append(block)
+        return adaptive
+
+    @staticmethod
     def _build_optional_pre_textual(blocks: List[DocumentBlock]) -> List[DocumentBlock]:
         if any(SemanticNLPEngine.canonicalize(block.normalized_text) == "RESUMO" for block in blocks):
             return blocks
@@ -181,7 +205,7 @@ class OrderingEngine:
         ]
 
     @staticmethod
-    def _ordered_post_textual(blocks: List[DocumentBlock]) -> List[DocumentBlock]:
+    def _ordered_post_textual(blocks: List[DocumentBlock], complete_missing: bool) -> List[DocumentBlock]:
         ref_heading = None
         references = []
         appendices = []
@@ -203,13 +227,13 @@ class OrderingEngine:
             else:
                 other_post_textual.append(block)
 
-        if ref_heading is None:
+        if ref_heading is None and complete_missing:
             ref_heading = OrderingEngine._locked_block(
                 OrderingEngine.DISPLAY_LABELS["REFERENCIAS"],
                 BlockType.HEADING,
             )
 
-        ordered = [ref_heading]
+        ordered = [ref_heading] if ref_heading is not None else []
         ordered.extend(sorted(references, key=lambda block: SemanticNLPEngine.canonicalize(block.normalized_text)))
         ordered.extend(other_post_textual)
         ordered.extend(appendices)
