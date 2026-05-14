@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SaaS ABNT</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-label="Formatador ABNT">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Formatador ABNT</p>
+            <h1>SaaS ABNT</h1>
+          </div>
+          <div class="status-pill" id="apiStatus">API local</div>
+        </header>
+
+        <div class="content-grid">
+          <section class="panel input-panel">
+            <div class="panel-header">
+              <div>
+                <h2>Entrada</h2>
+                <p>Envie um DOCX ou cole o conteúdo do trabalho.</p>
+              </div>
+              <button class="icon-button" id="clearButton" type="button" title="Limpar entrada" aria-label="Limpar entrada">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+
+            <div class="upload-zone" id="dropZone">
+              <input id="fileInput" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+              <div class="upload-copy">
+                <strong id="fileLabel">Selecionar DOCX</strong>
+                <span id="fileHint">Arraste um arquivo ou clique para escolher.</span>
+              </div>
+            </div>
+
+            <div class="divider"><span>ou</span></div>
+
+            <label class="text-label" for="textInput">Texto do documento</label>
+            <textarea id="textInput" spellcheck="true" placeholder="TÍTULO DO TRABALHO&#10;NOME DO AUTOR&#10;INTRODUÇÃO&#10;Escreva ou cole seu conteúdo aqui..."></textarea>
+          </section>
+
+          <section class="panel output-panel">
+            <div class="panel-header">
+              <div>
+                <h2>Resultado</h2>
+                <p>O arquivo formatado aparece aqui quando a compilação terminar.</p>
+              </div>
+            </div>
+
+            <div class="result-box" id="resultBox">
+              <div class="result-icon" aria-hidden="true">DOCX</div>
+              <h3 id="resultTitle">Pronto para formatar</h3>
+              <p id="resultMessage">Escolha uma entrada e gere seu documento ABNT.</p>
+            </div>
+
+            <div class="meta-grid">
+              <div>
+                <span>Estado</span>
+                <strong id="stateValue">Aguardando</strong>
+              </div>
+              <div>
+                <span>Tamanho</span>
+                <strong id="sizeValue">-</strong>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="primary-button" id="formatButton" type="button">
+                <span aria-hidden="true">↧</span>
+                Formatar documento
+              </button>
+              <a class="secondary-button disabled" id="downloadLink" download="documento_abnt_v6.docx" aria-disabled="true">
+                Baixar DOCX
+              </a>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <div class="modal-backdrop" id="downloadModal" role="dialog" aria-modal="true" aria-labelledby="downloadModalTitle" hidden>
+      <div class="modal-card">
+        <p class="modal-eyebrow">Antes de baixar</p>
+        <h2 id="downloadModalTitle">agradeça o ko pelo carinho folgada</h2>
+        <button class="primary-button modal-action" id="continueDownloadButton" type="button">Seguir</button>
+      </div>
+    </div>
+
+    <script src="/config.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
