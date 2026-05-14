@@ -1,3 +1,3 @@
 window.SAAS_ABNT_CONFIG = {
-  apiBaseUrl: "",
+  apiBaseUrl: "https://saasabnt-api.onrender.com",
 };

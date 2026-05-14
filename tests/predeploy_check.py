@@ -153,7 +153,10 @@ class PreDeployCheck(unittest.TestCase):
         self.assertTrue(netlify_toml.exists())
         self.assertIn('publish = "frontend"', netlify_toml.read_text(encoding="utf-8"))
         self.assertTrue(config_js.exists())
-        self.assertIn("apiBaseUrl", config_js.read_text(encoding="utf-8"))
+        self.assertIn(
+            'apiBaseUrl: "https://saasabnt-api.onrender.com"',
+            config_js.read_text(encoding="utf-8"),
+        )
         self.assertIn("apiUrl", app_js.read_text(encoding="utf-8"))
 
 

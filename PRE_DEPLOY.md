@@ -76,14 +76,14 @@ Example:
 
 ```js
 window.SAAS_ABNT_CONFIG = {
-  apiBaseUrl: "https://your-api.example.com",
+  apiBaseUrl: "https://saasabnt-api.onrender.com",
 };
 ```
 
 On the backend host, define:
 
 ```text
-ALLOWED_ORIGINS=https://your-site.netlify.app
+ALLOWED_ORIGINS=*
 ```
 
-Use comma-separated origins if needed.
+For stricter production use, replace `*` with the final frontend URL. Use comma-separated origins if needed.
