@@ -5,6 +5,7 @@ from docx.text.paragraph import Paragraph
 import hashlib
 import io
 import json
+import re
 
 
 class RenderValidationEngine:
@@ -38,7 +39,8 @@ class RenderValidationEngine:
             if sem.type == BlockType.TABLE:
                 state.append({"type": "table", "rows": sem.table_data or []})
             elif sem.text.strip():
-                state.append({"type": "paragraph", "text": sem.text.strip()})
+                normalized = re.sub(r"\s+", " ", sem.text).strip()
+                state.append({"type": "paragraph", "text": normalized})
 
         return state
 
@@ -50,7 +52,8 @@ class RenderValidationEngine:
             if element.tag.endswith("p"):
                 paragraph = Paragraph(element, doc)
                 if paragraph.text.strip():
-                    state.append({"type": "paragraph", "text": paragraph.text.strip()})
+                    normalized = re.sub(r"\s+", " ", paragraph.text).strip()
+                    state.append({"type": "paragraph", "text": normalized})
 
             elif element.tag.endswith("tbl"):
                 table = Table(element, doc)

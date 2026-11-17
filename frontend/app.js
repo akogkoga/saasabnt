@@ -12,14 +12,32 @@ const stateValue = document.querySelector("#stateValue");
 const sizeValue = document.querySelector("#sizeValue");
 const dropZone = document.querySelector("#dropZone");
 const apiStatus = document.querySelector("#apiStatus");
-const downloadModal = document.querySelector("#downloadModal");
-const continueDownloadButton = document.querySelector("#continueDownloadButton");
 const completeMissingInput = document.querySelector("#completeMissingInput");
+const metadataFields = document.querySelector("#metadataFields");
+const metaInputs = {
+  institution: document.querySelector("#metaInstitution"),
+  author: document.querySelector("#metaAuthor"),
+  title: document.querySelector("#metaTitle"),
+  advisor: document.querySelector("#metaAdvisor"),
+  city: document.querySelector("#metaCity"),
+  year: document.querySelector("#metaYear"),
+};
 
 let downloadUrl = "";
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const apiBaseUrl = (window.SAAS_ABNT_CONFIG?.apiBaseUrl || "").replace(/\/$/, "");
 
 const apiUrl = (path) => `${apiBaseUrl}${path}`;
+
+const ERROR_MESSAGES = {
+  "No input.": "Envie um DOCX ou cole um texto antes de formatar.",
+  "Unable to parse DOCX input.": "Não foi possível ler o arquivo DOCX enviado. Verifique se o arquivo é um DOCX válido.",
+};
+
+const humanizeErrorMessage = (detail) => {
+  if (!detail) return "Não foi possível formatar o documento.";
+  return ERROR_MESSAGES[detail] || detail;
+};
 
 const formatBytes = (bytes) => {
   if (!bytes) return "-";
@@ -53,26 +71,6 @@ const setBusy = (busy) => {
 
 const selectedFile = () => fileInput.files && fileInput.files[0];
 
-const openDownloadModal = () => {
-  downloadModal.hidden = false;
-  continueDownloadButton.focus();
-};
-
-const closeDownloadModal = () => {
-  downloadModal.hidden = true;
-};
-
-const triggerDownload = () => {
-  if (!downloadUrl) return;
-
-  const anchor = document.createElement("a");
-  anchor.href = downloadUrl;
-  anchor.download = downloadLink.download || "documento_abnt_v6.docx";
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-};
-
 const updateFileLabel = () => {
   const file = selectedFile();
   if (!file) {
@@ -90,7 +88,16 @@ const buildFormData = () => {
   const file = selectedFile();
   const text = textInput.value.trim();
 
+  if (file && text) {
+    throw new Error("Escolha apenas um arquivo ou texto para formatar.");
+  }
   if (file) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      throw new Error("O arquivo DOCX excede o limite de 5 MB.");
+    }
+    if (file.name && !file.name.toLowerCase().endsWith(".docx")) {
+      throw new Error("Envie um arquivo no formato .docx.");
+    }
     formData.append("file", file);
   } else if (text) {
     formData.append("text", text);
@@ -99,6 +106,12 @@ const buildFormData = () => {
   }
 
   formData.append("complete_missing", completeMissingInput.checked ? "true" : "false");
+  if (completeMissingInput.checked) {
+    Object.entries(metaInputs).forEach(([key, input]) => {
+      const val = input?.value?.trim();
+      if (val) formData.append(key, val);
+    });
+  }
   return formData;
 };
 
@@ -116,7 +129,7 @@ const formatDocument = async () => {
   setResult({
     title: "Formatando documento",
     message: completeMissingInput.checked
-      ? "Completando estrutura ABNT, validando IR e gerando o DOCX final."
+      ? "Completando a estrutura e gerando o DOCX."
       : "Formatando somente as partes enviadas, sem criar campos ausentes.",
     state: "Processando",
   });
@@ -129,7 +142,7 @@ const formatDocument = async () => {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => null);
-      throw new Error(payload?.detail || "Não foi possível formatar o documento.");
+      throw new Error(humanizeErrorMessage(payload?.detail));
     }
 
     const blob = await response.blob();
@@ -142,7 +155,7 @@ const formatDocument = async () => {
     const state = response.headers.get("X-Compilation-State") || "finalized";
     setResult({
       title: "Documento finalizado",
-      message: "O DOCX formatado está pronto para download.",
+      message: "O DOCX está pronto para download. Revise o conteúdo e a formatação antes de usar.",
       state,
       size: formatBytes(blob.size),
     });
@@ -158,27 +171,29 @@ const formatDocument = async () => {
   }
 };
 
+const syncMetadataVisibility = () => {
+  if (!metadataFields) return;
+  metadataFields.hidden = !completeMissingInput.checked;
+};
+
+syncMetadataVisibility();
+completeMissingInput.addEventListener("change", syncMetadataVisibility);
+
 fileInput.addEventListener("change", updateFileLabel);
 formatButton.addEventListener("click", formatDocument);
 
 downloadLink.addEventListener("click", (event) => {
   if (!downloadUrl || downloadLink.classList.contains("disabled")) {
     event.preventDefault();
-    return;
   }
-
-  event.preventDefault();
-  openDownloadModal();
-});
-
-continueDownloadButton.addEventListener("click", () => {
-  closeDownloadModal();
-  triggerDownload();
 });
 
 clearButton.addEventListener("click", () => {
   fileInput.value = "";
   textInput.value = "";
+  Object.values(metaInputs).forEach((input) => {
+    if (input) input.value = "";
+  });
   updateFileLabel();
   resetDownload();
   setResult({
@@ -212,7 +227,7 @@ dropZone.addEventListener("drop", (event) => {
   updateFileLabel();
 });
 
-fetch(apiUrl("/openapi.json"))
+fetch(apiUrl("/health"))
   .then((response) => {
     apiStatus.textContent = response.ok ? "API online" : "API indisponível";
   })

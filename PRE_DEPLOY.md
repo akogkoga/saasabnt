@@ -1,89 +1,46 @@
-# Pre-deploy checklist
+# Verificação antes de publicar (Pre-Deploy)
 
-## Local validation
+Consulte também o [README.md](README.md) para visão geral e limitações conhecidas.
 
-Run the automated pre-deploy suite before publishing:
+## 1. Validação local no Linux Mint
 
-```powershell
-.\.venv\Scripts\python.exe tests\predeploy_check.py
+No diretório do projeto (`/home/luigikoga/Projetos/saasabnt`), execute em sequência (adequado para máquinas com 4 GB de RAM):
+
+```bash
+.venv/bin/python -m pip check
+.venv/bin/python tests/predeploy_check.py
+PYTHONPATH=. .venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-Expected result:
+Para validar o fluxo completo no navegador:
 
-```text
-Ran 6 tests
-OK
+```bash
+.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-The suite validates:
+Acesse `http://127.0.0.1:8000` e valide com documentos sintéticos:
+- Indicador de status exibe `API online` (`/health`).
+- Formatação via texto colado (modo adaptativo e modo automático) gera e baixa o `.docx`.
+- Upload de arquivo `.docx` válido (com tabela simples, cabeçalhos e parágrafos) gera e baixa o `.docx`.
+- Arquivos inválidos, vazios ou com recursos não suportados (imagens, cabeçalhos/rodapés com conteúdo, negrito parcial, tabelas mescladas) exibem erro claro sem travar a aplicação.
 
-- Frontend static assets served by FastAPI.
-- Text input to DOCX generation.
-- DOCX upload with table preservation.
-- Bibliographic reference handling.
-- Empty input and corrupted DOCX errors.
-- Netlify static config and API base URL support.
+## 2. Checklist de publicação
 
-## Local run
+### Backend API (Render)
+- Arquivos utilizados: `render.yaml`, `.python-version` (`3.12`) e `requirements.txt`.
+- Build command: `pip install -r requirements.txt`
+- Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Health check: `GET /health` retorna HTTP 200 `{"status": "ok"}`.
+- **CORS (`ALLOWED_ORIGINS`)**: substitua `*` em `render.yaml` / painel do Render pela origem real do frontend (ex.: `https://seu-site.netlify.app`).
+- **Limites**: o app impõe 5 MiB por requisição (`MAX_REQUEST_BYTES`), 40 MiB descompactado e 1.000 entradas ZIP; configure também rate limiting e proteção no proxy/hospedagem.
 
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
+### Frontend estático (Netlify)
+- Arquivo utilizado: `netlify.toml` (`publish = "frontend"`).
+- Revise `frontend/config.js` para garantir que a URL fora de `localhost`/`127.0.0.1`/`[::1]` aponte para a URL pública da API em produção.
+- Nota: no plano gratuito do Render, a API hiberna após inatividade; a primeira requisição pode levar cerca de 1 minuto.
 
-Open:
+## 3. Segurança, privacidade e normas
 
-```text
-http://127.0.0.1:8000
-```
-
-## Netlify frontend
-
-Netlify should publish:
-
-```text
-frontend
-```
-
-The current `netlify.toml` already points to this folder.
-
-## Backend API
-
-The FastAPI backend can be hosted on Render's free Web Service plan. This repo includes:
-
-```text
-render.yaml
-.python-version
-```
-
-Render settings:
-
-```text
-Build Command: pip install -r requirements.txt
-Start Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-Plan: Free
-Health URL: /health
-```
-
-Free Render web services spin down after inactivity, so the first request after a quiet period can take about a minute.
-
-After the backend has a public URL, update:
-
-```text
-frontend/config.js
-```
-
-Example:
-
-```js
-window.SAAS_ABNT_CONFIG = {
-  apiBaseUrl: "https://saasabnt-api.onrender.com",
-};
-```
-
-On the backend host, define:
-
-```text
-ALLOWED_ORIGINS=*
-```
-
-For stricter production use, replace `*` with the final frontend URL. Use comma-separated origins if needed.
+- Execute auditoria de dependências (`pip-audit -r requirements.txt`, se instalado) antes do deploy.
+- Não envie documentos reais ou sigilosos antes de validar política de privacidade e retenção da hospedagem.
+- Não apresente o resultado como conformidade ABNT integral sem revisão humana: o motor não comprova aprovação institucional nem preserva recursos complexos de DOCX recusados na validação.

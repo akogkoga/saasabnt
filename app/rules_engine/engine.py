@@ -43,6 +43,7 @@ class RuleEngine:
         elif block_type == BlockType.REFERENCE:
             style.font_size = 10
             style.line_spacing = 1.0
+            style.space_after = 6
             style.alignment = "left"
             style.first_line_indent = 0.0
         elif block_type == BlockType.SHORT_CITATION:

@@ -19,12 +19,8 @@ class SemanticNormalizer:
 
     @staticmethod
     def _is_known_heading_alias(text: str, intent: str) -> bool:
-        aliases = SemanticNLPEngine.INTENT_DICTIONARY.get(intent, [])
         canonical_text = SemanticNLPEngine.canonicalize(text)
-        return canonical_text in {
-            SemanticNLPEngine.canonicalize(alias)
-            for alias in aliases
-        }
+        return canonical_text == intent
 
     @staticmethod
     def normalize(raw_blocks: Sequence[Union[str, DocumentBlock]]) -> List[DocumentBlock]:
@@ -41,11 +37,16 @@ class SemanticNormalizer:
             intent, confidence = SemanticNLPEngine.get_highest_intent(norm_text)
 
             if (
-                confidence >= 0.9
+                confidence >= SemanticNLPEngine.MIN_INTENT_CONFIDENCE
                 and intent in SemanticNormalizer.DISPLAY_LABELS
                 and SemanticNormalizer._is_known_heading_alias(norm_text, intent)
             ):
-                norm_text = SemanticNormalizer.DISPLAY_LABELS[intent]
+                label = SemanticNormalizer.DISPLAY_LABELS[intent]
+                prefix_match = re.match(r"^(\d+(?:\.\d+)*)\s*[-.)]?\s+(.+)$", norm_text)
+                updated_text = f"{prefix_match.group(1)} {label}" if prefix_match else label
+                if updated_text != norm_text:
+                    block.runs = None
+                norm_text = updated_text
 
             block.normalized_text = norm_text
             normalized_blocks.append(block)

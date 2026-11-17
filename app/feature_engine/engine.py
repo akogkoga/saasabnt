@@ -39,7 +39,15 @@ class FeatureEngine:
             sem.intent_distance = confidence # Stored for context
             sem.semantic_intent = intent
             
-            sem.chapter_pattern = 1.0 if re.match(r'^\d+(\.\d+)*\s+', text) else 0.0
+            sem.chapter_pattern = (
+                1.0
+                if (
+                    len(text) <= 120
+                    and not text.rstrip().endswith(".")
+                    and re.match(r"^\d{1,2}(\.\d{1,2})*\s+\S", text)
+                )
+                else 0.0
+            )
             
             # Boost chapter pattern if metadata says it's a heading
             if meta.is_heading_style and lex.length_norm < 0.3:

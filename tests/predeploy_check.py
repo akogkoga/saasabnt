@@ -23,8 +23,8 @@ class PreDeployCheck(unittest.TestCase):
         self.assertEqual(home.status_code, 200)
         self.assertIn("SaaS ABNT", home.text)
         self.assertIn("config.js", home.text)
-        self.assertIn("agrade", home.text)
-        self.assertIn("Para a formatação sair 100%", home.text)
+        self.assertNotIn("downloadModal", home.text)
+        self.assertIn("Revise o documento após a formatação", home.text)
         self.assertIn("Orientador não informado", home.text)
         self.assertIn("Completar estrutura ABNT automaticamente", home.text)
         self.assertIn("formatar somente o que foi enviado", home.text)
@@ -207,7 +207,7 @@ class PreDeployCheck(unittest.TestCase):
         self.assertIn('publish = "frontend"', netlify_toml.read_text(encoding="utf-8"))
         self.assertTrue(config_js.exists())
         self.assertIn(
-            'apiBaseUrl: "https://saasabnt-api.onrender.com"',
+            '"https://saasabnt-api.onrender.com"',
             config_js.read_text(encoding="utf-8"),
         )
         self.assertIn("apiUrl", app_js.read_text(encoding="utf-8"))

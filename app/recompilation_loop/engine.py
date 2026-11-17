@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List, Optional
 from app.models.document import DocumentBlock, ValidationResult, IRDocument
 from app.validation_engine.engine import ValidationEngine
 from app.correction_engine.engine import CorrectionEngine
@@ -15,6 +15,7 @@ class RecompilationLoopEngine:
     def run(
         blocks: List[DocumentBlock],
         complete_missing: bool = True,
+        metadata_overrides: Optional[Dict[str, str]] = None,
     ) -> tuple[List[DocumentBlock], ValidationResult, bool, IRDocument]:
         """
         Orchestrates the active correction loop with formal IR Hash convergence.
@@ -55,6 +56,7 @@ class RecompilationLoopEngine:
                 current_blocks = OrderingEngine.enforce_order(
                     struct,
                     complete_missing=complete_missing,
+                    metadata_overrides=metadata_overrides,
                 )
                 
             iteration += 1

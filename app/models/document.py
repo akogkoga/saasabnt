@@ -72,6 +72,15 @@ class GlobalContextVector(BaseModel):
     struct_depth: int = 0
     position_map: Dict[int, str] = Field(default_factory=dict)
 
+class TextRun(BaseModel):
+    text: str
+    bold: Optional[bool] = None
+    italic: bool = False
+    underline: bool = False
+    superscript: bool = False
+    subscript: bool = False
+
+
 class OriginalMetadata(BaseModel):
     is_bold: bool = False
     is_italic: bool = False
@@ -90,22 +99,28 @@ class DocumentBlock(BaseModel):
     is_ambiguous: bool = False
     ambiguity_details: Optional[str] = None
     is_locked: bool = False
+    is_generated: bool = False
+    runs: Optional[List[TextRun]] = None
     
     # Complex objects
     table_data: Optional[List[List[str]]] = None
+    table_runs: Optional[List[List[List[TextRun]]]] = None
     image_bytes: Optional[bytes] = None
 
 class SemanticIR(BaseModel):
     type: BlockType
     text: str
     level: int = 0
+    runs: Optional[List[TextRun]] = None
     table_data: Optional[List[List[str]]] = None
+    table_runs: Optional[List[List[List[TextRun]]]] = None
     image_bytes: Optional[bytes] = None
 
 class StyleIR(BaseModel):
     font_name: str = "Times New Roman"
     font_size: int = 12
     line_spacing: float = 1.5
+    space_after: int = 0
     first_line_indent: float = 1.25
     left_indent: float = 0.0
     alignment: str = "justify"

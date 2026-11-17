@@ -18,6 +18,7 @@ class CorrectionEngine:
                         normalized_text="REFERENCIAS",
                         predicted_type=BlockType.HEADING,
                         is_locked=True,
+                        is_generated=True,
                     )
                 )
 

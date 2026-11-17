@@ -9,6 +9,10 @@ class SemanticNLPEngine:
     Lightweight NLP engine using string distance for ABNT intent mapping.
     """
 
+    MIN_INTENT_CONFIDENCE = 0.85
+    MAX_HEADING_CHARS = 90
+    MAX_HEADING_WORDS = 8
+
     INTENT_DICTIONARY = {
         "INTRODUCAO": ["INTRODUCAO", "CONSIDERACOES INICIAIS", "PREFACIO", "APRESENTACAO"],
         "DESENVOLVIMENTO": [
@@ -52,8 +56,19 @@ class SemanticNLPEngine:
         """
         Returns (intent_key, confidence_score [0.0 - 1.0]).
         """
-        clean_text = SemanticNLPEngine.canonicalize(text)
+        stripped = (text or "").strip()
+        if not stripped or stripped.endswith("."):
+            return "UNKNOWN", 0.0
+
+        clean_text = SemanticNLPEngine.canonicalize(stripped)
         if not clean_text:
+            return "UNKNOWN", 0.0
+
+        text_tokens = clean_text.split()
+        if (
+            len(clean_text) > SemanticNLPEngine.MAX_HEADING_CHARS
+            or len(text_tokens) > SemanticNLPEngine.MAX_HEADING_WORDS
+        ):
             return "UNKNOWN", 0.0
 
         best_intent = "UNKNOWN"
@@ -62,17 +77,31 @@ class SemanticNLPEngine:
         for intent, synonyms in SemanticNLPEngine.INTENT_DICTIONARY.items():
             for synonym in synonyms:
                 clean_synonym = SemanticNLPEngine.canonicalize(synonym)
+                if not clean_synonym:
+                    continue
                 ratio = difflib.SequenceMatcher(None, clean_text, clean_synonym).ratio()
-
-                text_tokens = clean_text.split()
                 synonym_tokens = clean_synonym.split()
-                is_short_heading_like = len(text_tokens) <= len(synonym_tokens) + 1
 
-                if clean_synonym and clean_synonym in clean_text and is_short_heading_like:
+                if clean_text == clean_synonym:
+                    ratio = 1.0
+                elif (
+                    intent in {"APENDICES", "ANEXOS"}
+                    and clean_text.startswith(clean_synonym + " ")
+                    and len(text_tokens) <= 6
+                ):
+                    ratio = max(ratio, 0.95)
+                elif (
+                    intent in {"INTRODUCAO", "DESENVOLVIMENTO", "CONCLUSAO", "REFERENCIAS"}
+                    and clean_text.startswith(clean_synonym + " ")
+                    and len(text_tokens) <= len(synonym_tokens) + 1
+                ):
                     ratio = max(ratio, 0.95)
 
                 if ratio > highest_score:
                     highest_score = ratio
                     best_intent = intent
+
+        if highest_score < SemanticNLPEngine.MIN_INTENT_CONFIDENCE:
+            return "UNKNOWN", 0.0
 
         return best_intent, highest_score

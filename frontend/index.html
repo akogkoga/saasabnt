@@ -30,7 +30,7 @@
             </div>
 
             <aside class="input-warning" aria-label="Campos recomendados para ABNT completa">
-              <strong>Para a formatação sair 100%</strong>
+              <strong>Revise o documento após a formatação</strong>
               <p>
                 Inclua no arquivo: instituição, autor, título, cidade, ano, natureza do trabalho,
                 objetivo, área, orientador, resumo, introdução, desenvolvimento, conclusão e referências.
@@ -39,6 +39,7 @@
                 Se algum campo não vier no documento, o motor usa um texto padrão como
                 <span>INSTITUIÇÃO</span>, <span>CIDADE</span> ou <span>Orientador não informado</span>.
               </p>
+              <p>DOCX com imagens, cabeçalhos, rodapés, links, campos ou tabelas mescladas pode ser recusado para evitar perda de conteúdo. Negrito, itálico, sublinhado, sobrescrito e subscrito (em parágrafos e tabelas simples) são preservados. Confira o resultado e as regras exigidas pela sua instituição.</p>
             </aside>
 
             <label class="mode-toggle" for="completeMissingInput">
@@ -51,6 +52,36 @@
                 </small>
               </span>
             </label>
+
+            <div class="metadata-fields" id="metadataFields" hidden>
+              <p class="metadata-caption">Dados opcionais para Capa e Folha de Rosto (deixe em branco para usar os do texto ou padrão):</p>
+              <div class="metadata-grid">
+                <label>
+                  <span>Instituição</span>
+                  <input id="metaInstitution" type="text" placeholder="Ex.: Universidade Federal" />
+                </label>
+                <label>
+                  <span>Autor</span>
+                  <input id="metaAuthor" type="text" placeholder="Ex.: Maria da Silva" />
+                </label>
+                <label class="metadata-wide">
+                  <span>Título do trabalho</span>
+                  <input id="metaTitle" type="text" placeholder="Ex.: Sistemas de Informação Acadêmica" />
+                </label>
+                <label>
+                  <span>Orientador(a)</span>
+                  <input id="metaAdvisor" type="text" placeholder="Ex.: Prof. Dr. João Souza" />
+                </label>
+                <label>
+                  <span>Cidade</span>
+                  <input id="metaCity" type="text" placeholder="Ex.: São Paulo" />
+                </label>
+                <label>
+                  <span>Ano</span>
+                  <input id="metaYear" type="text" maxlength="4" inputmode="numeric" placeholder="Ex.: 2026" />
+                </label>
+              </div>
+            </div>
 
             <div class="upload-zone" id="dropZone">
               <input id="fileInput" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
@@ -74,7 +105,7 @@
               </div>
             </div>
 
-            <div class="result-box" id="resultBox">
+            <div class="result-box" id="resultBox" role="status" aria-live="polite" aria-atomic="true">
               <div class="result-icon" aria-hidden="true">DOCX</div>
               <h3 id="resultTitle">Pronto para formatar</h3>
               <p id="resultMessage">Escolha uma entrada e gere seu documento ABNT.</p>
@@ -104,14 +135,6 @@
         </div>
       </section>
     </main>
-
-    <div class="modal-backdrop" id="downloadModal" role="dialog" aria-modal="true" aria-labelledby="downloadModalTitle" hidden>
-      <div class="modal-card">
-        <p class="modal-eyebrow">Antes de baixar</p>
-        <h2 id="downloadModalTitle">agradeça o ko pelo carinho folgada</h2>
-        <button class="primary-button modal-action" id="continueDownloadButton" type="button">Seguir</button>
-      </div>
-    </div>
 
     <script src="/config.js"></script>
     <script src="/app.js"></script>

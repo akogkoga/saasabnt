@@ -18,8 +18,8 @@ class DocumentAssembler:
             final_list.extend(tree.textual_dev)
             
         # 4. Textual Conclusion
-        if tree.textual_concl:
-            final_list.extend(tree.textual_concl)
+        if tree.textual_conclusion:
+            final_list.extend(tree.textual_conclusion)
             
         # 5. Post-textual
         if tree.post_textual:

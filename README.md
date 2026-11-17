@@ -1,43 +1,36 @@
-# ABNT Formatter Engine
+# SaaS ABNT — formatador de documentos
 
-Backend modular para formatação automática de documentos seguindo a norma ABNT NBR 14724.
+Aplicação FastAPI com interface web para gerar um DOCX a partir de texto ou de um DOCX simples. A formatação é automática e precisa de revisão: o projeto não comprova conformidade integral com normas ABNT ou regras de uma instituição.
 
-## 🚀 Como Rodar
+## Executar no Linux
 
-1. **Instale as dependências:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+Requisitos: Python 3.12, pip e venv. No diretório do projeto:
 
-2. **Inicie o servidor:**
-   ```bash
-   python app/main.py
-   ```
-
-3. **Use o endpoint:**
-   O servidor estará rodando em `http://localhost:8000`.
-   Você pode testar via cURL ou Postman enviando um `POST` para `/format`.
-
-### Exemplo cURL (Texto):
 ```bash
-curl -X POST http://localhost:8000/format \
-     -F "text=TÍTULO DO TRABALHO\nNOME DO AUTOR\nINTRODUÇÃO\nEste é um texto de introdução." \
-     --output meu_trabalho.docx
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip check
+.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-## 🏗️ Arquitetura
+Acesse `http://127.0.0.1:8000`. O frontend usa a API local quando acessado por `localhost` ou `127.0.0.1`; em outros endereços usa a URL de `frontend/config.js`. Para finalizar, pressione Ctrl+C. A entrada é limitada a 5 MiB por requisição; DOCX descompactado, a 40 MiB.
 
-- **Parser**: Extrai blocos de texto de strings ou arquivos .docx.
-- **Rules Engine**: Classifica blocos (Heading, Paragraph, Citation) de forma determinística.
-- **Structure Builder**: Monta a árvore do documento (Capa, Introdução, Desenvolvimento, etc).
-- **DOCX Generator**: Aplica as regras visuais da ABNT (margens, fontes, recuos) usando `python-docx`.
+## Testes
 
-## 📐 Regras Aplicadas
+```bash
+.venv/bin/python tests/predeploy_check.py
+PYTHONPATH=. .venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
+```
 
-- Fonte: Times New Roman, Tamanho 12.
-- Margens: Sup/Esq 3cm, Inf/Dir 2cm.
-- Espaçamento: 1.5 (Geral) e 1.0 (Citações Longas/Referências).
-- Recuo: 1.25cm na primeira linha de parágrafos.
-- Citação Longa: Recuo de 4cm à esquerda, fonte 10.
+Os testes usam documentos sintéticos. Não envie documentos pessoais para serviços que não tenham sido avaliados quanto à privacidade.
 
-⚡ GOLDCODE rules applied — global_rules.md v3.0
+## Limitações importantes
+
+- O processamento reconstrói o DOCX: trechos de parágrafos e tabelas simples com negrito, itálico, sublinhado, sobrescrito e subscrito são preservados, mas há verificação para recusar recursos que o renderizador não preserva, como imagens, cabeçalhos, rodapés com conteúdo, links, campos, riscado/realce e tabelas mescladas/aninhadas. Ela não prova detecção de todos os recursos possíveis de DOCX. Revise o resultado e preserve o original.
+- Tabelas simples têm seu texto e destaques básicos reconstruídos com bordas laterais abertas (estilo IBGE simplificado); larguras de coluna e cores originais não são preservadas. A estrutura e a ordem podem ser alteradas. Texto colado perde formatação original.
+- No modo automático, campos opcionais da interface permitem preencher Instituição, Autor, Título, Orientador, Cidade e Ano; campos não informados usam placeholders genéricos para revisão. O sumário gerado inclui lista de seções e campo `TOC` para atualização de páginas no Word/LibreOffice. Citações longas em texto puro só são identificadas automaticamente quando terminam com `(AUTOR, ANO, p. X)`; revise-as manualmente.
+- O endpoint `/format` conta com limite de taxa em memória por IP (`RATE_LIMIT_PER_MINUTE`, padrão 60/min), além dos limites de tamanho (`5 MiB` / `40 MiB` descompactado). Isso não substitui autenticação, proxies reversos ou política de privacidade/retenção para produção.
+
+## Implantação
+
+`render.yaml` inicia a API; `netlify.toml` publica o frontend. Configure `ALLOWED_ORIGINS` com as origens reais do frontend antes da publicação e revise a URL da API em `frontend/config.js`. As configurações declaradas não demonstram que um serviço está publicado ou seguro. Deploy exige validação e autorização separadas.
