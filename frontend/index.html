@@ -4,33 +4,64 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>SaaS ABNT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+    />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <main class="app-shell">
       <section class="workspace" aria-label="Formatador ABNT">
         <header class="topbar">
-          <div>
-            <p class="eyebrow">Formatador ABNT</p>
+          <div class="brand-block">
+            <p class="eyebrow">Compilador Acadêmico · ABNT</p>
             <h1>SaaS ABNT</h1>
+            <p class="subtitle">
+              Estruture trabalhos e textos acadêmicos em DOCX padronizado, preservando conteúdo e destaques.
+            </p>
+            <ul class="spec-strip" aria-label="Especificações de formatação">
+              <li>NBR 14724</li>
+              <li>A4 · 3 / 3 / 2 / 2 cm</li>
+              <li>Times 12pt · 1,5x</li>
+              <li>Tabelas IBGE</li>
+            </ul>
           </div>
-          <div class="status-pill" id="apiStatus">API local</div>
+          <div class="status-pill" id="apiStatus" role="status" aria-live="polite">Verificando API</div>
         </header>
 
         <div class="content-grid">
           <section class="panel input-panel">
             <div class="panel-header">
               <div>
-                <h2>Entrada</h2>
-                <p>Envie um DOCX ou cole o conteúdo do trabalho.</p>
+                <h2>Entrada do documento</h2>
+                <p>Envie um arquivo DOCX ou cole o conteúdo estruturado abaixo.</p>
               </div>
-              <button class="icon-button" id="clearButton" type="button" title="Limpar entrada" aria-label="Limpar entrada">
-                <span aria-hidden="true">×</span>
+              <button
+                class="icon-button"
+                id="clearButton"
+                type="button"
+                title="Limpar entrada"
+                aria-label="Limpar entrada"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
               </button>
             </div>
 
             <aside class="input-warning" aria-label="Campos recomendados para ABNT completa">
-              <strong>Revise o documento após a formatação</strong>
+              <div class="warning-head">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4" />
+                  <path d="M12 8h.01" />
+                </svg>
+                <strong>Revise o documento após a formatação</strong>
+              </div>
               <p>
                 Inclua no arquivo: instituição, autor, título, cidade, ano, natureza do trabalho,
                 objetivo, área, orientador, resumo, introdução, desenvolvimento, conclusão e referências.
@@ -39,7 +70,9 @@
                 Se algum campo não vier no documento, o motor usa um texto padrão como
                 <span>INSTITUIÇÃO</span>, <span>CIDADE</span> ou <span>Orientador não informado</span>.
               </p>
-              <p>DOCX com imagens, cabeçalhos, rodapés, links, campos ou tabelas mescladas pode ser recusado para evitar perda de conteúdo. Negrito, itálico, sublinhado, sobrescrito e subscrito (em parágrafos e tabelas simples) são preservados. Confira o resultado e as regras exigidas pela sua instituição.</p>
+              <p>
+                DOCX com imagens, cabeçalhos, rodapés, links, campos ou tabelas mescladas pode ser recusado para evitar perda de conteúdo. Negrito, itálico, sublinhado, sobrescrito e subscrito (em parágrafos e tabelas simples) são preservados. Confira o resultado e as regras exigidas pela sua instituição.
+              </p>
             </aside>
 
             <label class="mode-toggle" for="completeMissingInput">
@@ -83,17 +116,36 @@
               </div>
             </div>
 
-            <div class="upload-zone" id="dropZone">
-              <input id="fileInput" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
-              <div class="upload-copy">
-                <strong id="fileLabel">Selecionar DOCX</strong>
-                <span id="fileHint">Arraste um arquivo ou clique para escolher.</span>
+            <div class="upload-shell">
+              <div class="upload-zone" id="dropZone">
+                <input id="fileInput" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                <div class="upload-icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <path d="M14 2v6h6" />
+                    <path d="M12 18v-6" />
+                    <path d="m9 15 3-3 3 3" />
+                  </svg>
+                </div>
+                <div class="upload-copy">
+                  <strong id="fileLabel">Selecionar DOCX</strong>
+                  <span id="fileHint">Arraste um arquivo .docx (até 5 MB) ou clique para escolher.</span>
+                </div>
               </div>
+              <button class="ghost-action" id="removeFileButton" type="button" hidden>
+                Remover arquivo selecionado
+              </button>
             </div>
 
             <div class="divider"><span>ou</span></div>
 
-            <label class="text-label" for="textInput">Texto do documento</label>
+            <div class="text-toolbar">
+              <label class="text-label" for="textInput">Texto do documento</label>
+              <div class="text-toolbar-actions">
+                <span class="text-stats" id="textStats">0 linhas · 0 palavras</span>
+                <button class="text-action-btn" id="sampleButton" type="button">Preencher exemplo</button>
+              </div>
+            </div>
             <textarea id="textInput" spellcheck="true" placeholder="TÍTULO DO TRABALHO&#10;NOME DO AUTOR&#10;INTRODUÇÃO&#10;Escreva ou cole seu conteúdo aqui..."></textarea>
           </section>
 
@@ -101,12 +153,23 @@
             <div class="panel-header">
               <div>
                 <h2>Resultado</h2>
-                <p>O arquivo formatado aparece aqui quando a compilação terminar.</p>
+                <p>O documento compilado e verificado aparece aqui para download.</p>
               </div>
             </div>
 
             <div class="result-box" id="resultBox" role="status" aria-live="polite" aria-atomic="true">
-              <div class="result-icon" aria-hidden="true">DOCX</div>
+              <div class="doc-sheet-preview" aria-hidden="true">
+                <div class="sheet-lines">
+                  <span class="sheet-line is-short"></span>
+                  <span class="sheet-line"></span>
+                  <span class="sheet-line is-medium"></span>
+                </div>
+                <div class="result-icon">DOCX</div>
+                <div class="sheet-lines">
+                  <span class="sheet-line"></span>
+                  <span class="sheet-line is-medium"></span>
+                </div>
+              </div>
               <h3 id="resultTitle">Pronto para formatar</h3>
               <p id="resultMessage">Escolha uma entrada e gere seu documento ABNT.</p>
             </div>
@@ -120,15 +183,28 @@
                 <span>Tamanho</span>
                 <strong id="sizeValue">-</strong>
               </div>
+              <div>
+                <span>Modo ativo</span>
+                <strong id="modeValue">Adaptativo</strong>
+              </div>
             </div>
 
             <div class="actions">
               <button class="primary-button" id="formatButton" type="button">
-                <span aria-hidden="true">↧</span>
-                Formatar documento
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <path d="m9 15 2 2 4-4" />
+                </svg>
+                <span>Formatar documento</span>
               </button>
               <a class="secondary-button disabled" id="downloadLink" download="documento_abnt_v6.docx" aria-disabled="true">
-                Baixar DOCX
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" x2="12" y1="15" y2="3" />
+                </svg>
+                <span>Baixar DOCX</span>
               </a>
             </div>
           </section>

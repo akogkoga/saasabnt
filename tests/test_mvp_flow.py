@@ -319,10 +319,15 @@ class MVPFlowTests(unittest.TestCase):
         self.assertIn('apiUrl("/health")', app_js)
         self.assertIn("MAX_UPLOAD_BYTES", app_js)
         self.assertIn("humanizeErrorMessage", app_js)
+        self.assertIn("updateTextStats", app_js)
         self.assertIn(":focus-within", styles_css)
         self.assertIn(":focus-visible", styles_css)
         self.assertIn("metadataFields", index_html)
         self.assertIn("metaInstitution", index_html)
+        self.assertIn("sampleButton", index_html)
+        self.assertIn("textStats", index_html)
+        self.assertIn("removeFileButton", index_html)
+        self.assertIn("modeValue", index_html)
 
     def test_docx_preserves_inline_runs_bold_italic_underline_and_super_sub(self):
         source = Document()

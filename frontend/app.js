@@ -1,7 +1,10 @@
 const fileInput = document.querySelector("#fileInput");
 const fileLabel = document.querySelector("#fileLabel");
 const fileHint = document.querySelector("#fileHint");
+const removeFileButton = document.querySelector("#removeFileButton");
 const textInput = document.querySelector("#textInput");
+const textStats = document.querySelector("#textStats");
+const sampleButton = document.querySelector("#sampleButton");
 const formatButton = document.querySelector("#formatButton");
 const clearButton = document.querySelector("#clearButton");
 const downloadLink = document.querySelector("#downloadLink");
@@ -10,6 +13,7 @@ const resultTitle = document.querySelector("#resultTitle");
 const resultMessage = document.querySelector("#resultMessage");
 const stateValue = document.querySelector("#stateValue");
 const sizeValue = document.querySelector("#sizeValue");
+const modeValue = document.querySelector("#modeValue");
 const dropZone = document.querySelector("#dropZone");
 const apiStatus = document.querySelector("#apiStatus");
 const completeMissingInput = document.querySelector("#completeMissingInput");
@@ -34,6 +38,37 @@ const ERROR_MESSAGES = {
   "Unable to parse DOCX input.": "Não foi possível ler o arquivo DOCX enviado. Verifique se o arquivo é um DOCX válido.",
 };
 
+const FORMAT_BUTTON_IDLE = `
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+    <path d="m9 15 2 2 4-4" />
+  </svg>
+  <span>Formatar documento</span>
+`;
+
+const FORMAT_BUTTON_BUSY = `
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+  </svg>
+  <span>Formatando...</span>
+`;
+
+const SAMPLE_DOCUMENT = [
+  "PADRONIZAÇÃO DIGITAL DE DOCUMENTOS ACADÊMICOS",
+  "MARIANA FERREIRA COSTA",
+  "RESUMO",
+  "Este trabalho analisa a automação da formatação acadêmica conforme as diretrizes da ABNT, avaliando a preservação de conteúdo estrutural, tabelas e citações em documentos digitais.",
+  "INTRODUÇÃO",
+  "A padronização documental facilita a leitura técnica e garante uniformidade visual em pesquisas científicas.",
+  "FUNDAMENTAÇÃO TEÓRICA",
+  "Segundo Silva (2022), a organização hierárquica de seções reduz falhas na revisão editorial de trabalhos de conclusão.",
+  "CONCLUSÃO",
+  "Os resultados indicam ganhos de produtividade mantendo a revisão humana como etapa essencial de validação.",
+  "REFERÊNCIAS",
+  "SILVA, João. Metodologia e normalização científica. São Paulo: Atlas, 2022.",
+].join("\n");
+
 const humanizeErrorMessage = (detail) => {
   if (!detail) return "Não foi possível formatar o documento.";
   return ERROR_MESSAGES[detail] || detail;
@@ -46,12 +81,14 @@ const formatBytes = (bytes) => {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 };
 
-const setResult = ({ title, message, state, size, error = false }) => {
+const setResult = ({ title, message, state, size, tone = "idle" }) => {
   resultTitle.textContent = title;
   resultMessage.textContent = message;
   stateValue.textContent = state;
   sizeValue.textContent = size || "-";
-  resultBox.classList.toggle("is-error", error);
+  resultBox.classList.toggle("is-busy", tone === "busy");
+  resultBox.classList.toggle("is-success", tone === "success");
+  resultBox.classList.toggle("is-error", tone === "error");
 };
 
 const resetDownload = () => {
@@ -64,23 +101,33 @@ const resetDownload = () => {
 
 const setBusy = (busy) => {
   formatButton.disabled = busy;
-  formatButton.innerHTML = busy
-    ? '<span aria-hidden="true">...</span> Formatando'
-    : '<span aria-hidden="true">↧</span> Formatar documento';
+  formatButton.innerHTML = busy ? FORMAT_BUTTON_BUSY : FORMAT_BUTTON_IDLE;
 };
 
 const selectedFile = () => fileInput.files && fileInput.files[0];
 
 const updateFileLabel = () => {
   const file = selectedFile();
+  dropZone.classList.toggle("has-file", Boolean(file));
+  if (removeFileButton) removeFileButton.hidden = !file;
+
   if (!file) {
     fileLabel.textContent = "Selecionar DOCX";
-    fileHint.textContent = "Arraste um arquivo ou clique para escolher.";
+    fileHint.textContent = "Arraste um arquivo .docx (até 5 MB) ou clique para escolher.";
     return;
   }
 
   fileLabel.textContent = file.name;
   fileHint.textContent = `${formatBytes(file.size)} selecionado`;
+};
+
+const updateTextStats = () => {
+  if (!textStats) return;
+  const raw = textInput.value;
+  const trimmed = raw.trim();
+  const lines = trimmed ? raw.split(/\r?\n/).filter((line) => line.trim()).length : 0;
+  const words = trimmed ? trimmed.split(/\s+/).length : 0;
+  textStats.textContent = `${lines} ${lines === 1 ? "linha" : "linhas"} · ${words} ${words === 1 ? "palavra" : "palavras"}`;
 };
 
 const buildFormData = () => {
@@ -132,6 +179,7 @@ const formatDocument = async () => {
       ? "Completando a estrutura e gerando o DOCX."
       : "Formatando somente as partes enviadas, sem criar campos ausentes.",
     state: "Processando",
+    tone: "busy",
   });
 
   try {
@@ -158,26 +206,50 @@ const formatDocument = async () => {
       message: "O DOCX está pronto para download. Revise o conteúdo e a formatação antes de usar.",
       state,
       size: formatBytes(blob.size),
+      tone: "success",
     });
   } catch (error) {
     setResult({
       title: "Não foi possível concluir",
       message: error.message,
       state: "Erro",
-      error: true,
+      tone: "error",
     });
   } finally {
     setBusy(false);
   }
 };
 
-const syncMetadataVisibility = () => {
-  if (!metadataFields) return;
-  metadataFields.hidden = !completeMissingInput.checked;
+const syncModeUI = () => {
+  if (metadataFields) {
+    metadataFields.hidden = !completeMissingInput.checked;
+  }
+  if (modeValue) {
+    modeValue.textContent = completeMissingInput.checked ? "Completo ABNT" : "Adaptativo";
+  }
 };
 
-syncMetadataVisibility();
-completeMissingInput.addEventListener("change", syncMetadataVisibility);
+syncModeUI();
+updateTextStats();
+completeMissingInput.addEventListener("change", syncModeUI);
+textInput.addEventListener("input", updateTextStats);
+
+if (sampleButton) {
+  sampleButton.addEventListener("click", () => {
+    fileInput.value = "";
+    updateFileLabel();
+    textInput.value = SAMPLE_DOCUMENT;
+    updateTextStats();
+    textInput.focus();
+  });
+}
+
+if (removeFileButton) {
+  removeFileButton.addEventListener("click", () => {
+    fileInput.value = "";
+    updateFileLabel();
+  });
+}
 
 fileInput.addEventListener("change", updateFileLabel);
 formatButton.addEventListener("click", formatDocument);
@@ -195,11 +267,13 @@ clearButton.addEventListener("click", () => {
     if (input) input.value = "";
   });
   updateFileLabel();
+  updateTextStats();
   resetDownload();
   setResult({
     title: "Pronto para formatar",
     message: "Escolha uma entrada e gere seu documento ABNT.",
     state: "Aguardando",
+    tone: "idle",
   });
 });
 
@@ -229,8 +303,13 @@ dropZone.addEventListener("drop", (event) => {
 
 fetch(apiUrl("/health"))
   .then((response) => {
-    apiStatus.textContent = response.ok ? "API online" : "API indisponível";
+    const ok = response.ok;
+    apiStatus.textContent = ok ? "API online" : "API indisponível";
+    apiStatus.classList.toggle("is-online", ok);
+    apiStatus.classList.toggle("is-offline", !ok);
   })
   .catch(() => {
     apiStatus.textContent = "API offline";
+    apiStatus.classList.remove("is-online");
+    apiStatus.classList.add("is-offline");
   });
